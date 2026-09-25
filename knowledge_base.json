@@ -1,0 +1,39 @@
+{
+    "greeting": "Hello! Welcome to our AI Customer Support Service. How can I help you today?",
+
+    "orders": {
+        "status": "You can check your order status using your order ID. Please provide your order ID.",
+        "not_received": "If your order has not arrived, please provide your order ID so we can check the delivery details.",
+        "cancel": "Orders can be cancelled before they are shipped. Please provide your order ID."
+    },
+
+    "delivery": {
+        "time": "Standard delivery usually takes 3 to 5 business days.",
+        "late": "We apologize for the delay. Please provide your order ID so we can check the delivery status."
+    },
+
+    "returns": {
+        "policy": "Products can be returned within 7 days of delivery if they are unused and in their original condition.",
+        "process": "To start a return, please provide your order ID and the reason for the return."
+    },
+
+    "refunds": {
+        "time": "Refunds are generally processed within 5 to 7 business days after a return is approved.",
+        "not_received": "If you have not received your refund, please provide your order ID so we can check the refund status."
+    },
+
+    "payments": {
+        "methods": "We support UPI, debit cards, credit cards and net banking.",
+        "failed": "If your payment failed but money was deducted, please wait for the bank reversal. If the amount is not returned, contact support with your transaction details."
+    },
+
+    "account": {
+        "password": "You can reset your password using the Forgot Password option on the login page.",
+        "help": "Please provide your registered email address for account-related assistance."
+    },
+
+    "support": {
+        "contact": "You can contact customer support through the support section of the application.",
+        "working_hours": "Customer support is available Monday to Saturday, from 9 AM to 6 PM."
+    }
+}
