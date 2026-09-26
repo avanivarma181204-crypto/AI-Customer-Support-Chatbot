@@ -1,601 +1,552 @@
 import json
 import re
 from datetime import datetime
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent
+KNOWLEDGE_FILE = BASE_DIR / "knowledge_base.json"
+MEMORY_FILE = BASE_DIR / "memory.json"
 
 
-# ============================================================
-# FILE NAMES
-# ============================================================
+# ---------------------------------------------------------
+# FILE HANDLING
+# ---------------------------------------------------------
 
-KNOWLEDGE_FILE = "knowledge_base.json"
-MEMORY_FILE = "memory.json"
-
-
-# ============================================================
-# LOAD JSON FILE
-# ============================================================
-
-def load_json(filename, default):
+def load_json(file_path, default_data):
+    """Load JSON data safely."""
     try:
-        with open(filename, "r", encoding="utf-8") as file:
-            return json.load(file)
-    except (FileNotFoundError, json.JSONDecodeError):
-        return default
+        if file_path.exists():
+            with open(file_path, "r", encoding="utf-8") as file:
+                data = json.load(file)
+                return data
+    except (json.JSONDecodeError, OSError):
+        pass
+
+    return default_data
 
 
-# ============================================================
-# SAVE JSON FILE
-# ============================================================
-
-def save_json(filename, data):
-    with open(filename, "w", encoding="utf-8") as file:
-        json.dump(data, file, indent=4, ensure_ascii=False)
-
-
-# ============================================================
-# LOAD KNOWLEDGE BASE
-# ============================================================
-
-knowledge_base = load_json(KNOWLEDGE_FILE, {})
+def save_json(file_path, data):
+    """Save JSON data safely."""
+    try:
+        with open(file_path, "w", encoding="utf-8") as file:
+            json.dump(data, file, indent=4, ensure_ascii=False)
+    except OSError as error:
+        print(f"Unable to save data: {error}")
 
 
-# ============================================================
-# DEFAULT MEMORY
-# ============================================================
+# ---------------------------------------------------------
+# MEMORY
+# ---------------------------------------------------------
 
 default_memory = {
     "customer_name": "",
     "order_id": "",
     "previous_issue": "",
-    "conversation": []
+    "conversation_history": []
 }
-
-
-# ============================================================
-# LOAD MEMORY
-# ============================================================
 
 memory = load_json(MEMORY_FILE, default_memory)
 
+# Make sure older memory files still work
 memory.setdefault("customer_name", "")
 memory.setdefault("order_id", "")
 memory.setdefault("previous_issue", "")
-memory.setdefault("conversation", [])
+memory.setdefault("conversation_history", [])
 
 
-# ============================================================
-# REMEMBER CUSTOMER NAME
-# ============================================================
+# ---------------------------------------------------------
+# KNOWLEDGE BASE
+# ---------------------------------------------------------
 
-def remember_customer_name(message):
+knowledge_base = load_json(KNOWLEDGE_FILE, {})
+
+
+# ---------------------------------------------------------
+# INFORMATION EXTRACTION
+# ---------------------------------------------------------
+
+def extract_customer_name(message):
+    """
+    Detect names from messages such as:
+    My name is Avani
+    I am Avani
+    I'm Avani
+    """
     patterns = [
-        r"\bmy name is\s+([a-zA-Z]+)",
-        r"\bi am\s+([a-zA-Z]+)",
-        r"\bi'm\s+([a-zA-Z]+)",
-        r"\bcall me\s+([a-zA-Z]+)"
+        r"\bmy name is ([A-Za-z][A-Za-z ]{1,30})\b",
+        r"\bi am ([A-Za-z][A-Za-z ]{1,30})\b",
+        r"\bi'm ([A-Za-z][A-Za-z ]{1,30})\b"
     ]
 
     for pattern in patterns:
         match = re.search(pattern, message, re.IGNORECASE)
-
         if match:
-            name = match.group(1)
-            memory["customer_name"] = name
-            return name
+            name = match.group(1).strip()
+
+            # Stop common sentence words from becoming part of the name
+            stop_words = [
+                "and", "but", "because", "from", "with",
+                "today", "here", "looking", "having"
+            ]
+
+            words = name.split()
+            cleaned_words = []
+
+            for word in words:
+                if word.lower() in stop_words:
+                    break
+                cleaned_words.append(word)
+
+            name = " ".join(cleaned_words).strip()
+
+            if name:
+                return name.title()
 
     return None
 
 
-# ============================================================
-# REMEMBER ORDER ID
-# ============================================================
+def extract_order_id(message):
+    """
+    Detect order/reference IDs such as:
+    ORD12345
+    ORD-12345
+    ORDER12345
+    """
+    patterns = [
+        r"\bORD[- ]?\d{3,}\b",
+        r"\bORDER[- ]?\d{3,}\b",
+        r"\bREF[- ]?\d{3,}\b"
+    ]
 
-def remember_order_id(message):
-    message = message.strip()
-
-    # Example:
-    # My order ID is ORD12345
-    # My order number is ORD12345
-    # Order ID: ORD12345
-
-    match = re.search(
-        r"\border\s*(?:id|number)\s*(?:is|:)?\s*(ORD[-]?\d+)\b",
-        message,
-        re.IGNORECASE
-    )
-
-    if match:
-        order_id = match.group(1).upper()
-        memory["order_id"] = order_id
-        return order_id
-
-    # Example:
-    # ORD12345
-    # ORD-12345
-
-    match = re.search(
-        r"\bORD[-]?\d+\b",
-        message,
-        re.IGNORECASE
-    )
-
-    if match:
-        order_id = match.group(0).upper()
-        memory["order_id"] = order_id
-        return order_id
+    for pattern in patterns:
+        match = re.search(pattern, message, re.IGNORECASE)
+        if match:
+            value = match.group(0).upper()
+            value = re.sub(r"\s+", "", value)
+            return value
 
     return None
 
 
-# ============================================================
-# DETECT CUSTOMER ISSUE
-# ============================================================
+# ---------------------------------------------------------
+# INTENT DETECTION
+# ---------------------------------------------------------
 
-def detect_issue(message):
-    text = message.lower()
+INTENT_KEYWORDS = {
+    "order_status": [
+        "order status",
+        "where is my order",
+        "track my order",
+        "track order",
+        "order tracking",
+        "order update"
+    ],
 
-    if any(word in text for word in [
-        "refund",
-        "money back"
-    ]):
-        memory["previous_issue"] = "Refund issue"
-        return
-
-    if any(word in text for word in [
-        "return",
-        "send back",
-        "exchange"
-    ]):
-        memory["previous_issue"] = "Return request"
-        return
-
-    if any(word in text for word in [
-        "payment",
-        "upi",
-        "debit card",
-        "credit card",
-        "net banking",
-        "money deducted",
-        "transaction"
-    ]):
-        memory["previous_issue"] = "Payment issue"
-        return
-
-    if any(phrase in text for phrase in [
-        "cancel order",
+    "order_cancel": [
         "cancel my order",
-        "cancel the order",
-        "want to cancel"
-    ]):
-        memory["previous_issue"] = "Order cancellation"
-        return
+        "cancel order",
+        "want to cancel",
+        "cancellation"
+    ],
 
-    if any(word in text for word in [
-        "password",
-        "login",
-        "account"
-    ]):
-        memory["previous_issue"] = "Account issue"
-        return
-
-    if any(word in text for word in [
+    "delivery": [
         "delivery",
-        "shipping",
-        "arrived",
-        "delivered",
-        "not arrived",
-        "not delivered",
-        "order is late"
-    ]):
-        memory["previous_issue"] = "Delivery issue"
-        return
+        "arrive",
+        "shipping time",
+        "how long",
+        "delivery time",
+        "when will it arrive",
+        "late delivery",
+        "delayed delivery",
+        "shipping delay"
+    ],
 
-
-# ============================================================
-# GENERATE RESPONSE
-# ============================================================
-
-def generate_response(message):
-    text = message.lower().strip()
-
-    # --------------------------------------------------------
-    # SAVE NAME
-    # --------------------------------------------------------
-
-    name = remember_customer_name(message)
-
-    if name:
-        return (
-            f"Nice to meet you, {name}! "
-            "I will remember your name during our conversations."
-        )
-
-    # --------------------------------------------------------
-    # SAVE ORDER ID
-    # --------------------------------------------------------
-
-    order_id = remember_order_id(message)
-
-    if order_id:
-        return (
-            f"Thank you. I have saved your order ID as {order_id}. "
-            "How can I help you with this order?"
-        )
-
-    # --------------------------------------------------------
-    # ASK NAME
-    # --------------------------------------------------------
-
-    if any(phrase in text for phrase in [
-        "what is my name",
-        "what's my name",
-        "do you know my name",
-        "remember my name"
-    ]):
-        if memory["customer_name"]:
-            return f"Yes. Your name is {memory['customer_name']}."
-
-        return "I don't have your name saved yet."
-
-    # --------------------------------------------------------
-    # ASK ORDER ID
-    # --------------------------------------------------------
-
-    if any(phrase in text for phrase in [
-        "what is my order id",
-        "what's my order id",
-        "do you know my order id",
-        "remember my order id",
-        "what is my order number",
-        "what's my order number"
-    ]):
-        if memory["order_id"]:
-            return (
-                f"Yes. Your saved order ID is "
-                f"{memory['order_id']}."
-            )
-
-        return "I don't have an order ID saved yet."
-
-    # --------------------------------------------------------
-    # ASK MEMORY
-    # --------------------------------------------------------
-
-    if any(phrase in text for phrase in [
-        "what do you remember",
-        "what do you know about me",
-        "show my memory",
-        "show memory"
-    ]):
-        customer_name = memory["customer_name"] or "Not provided"
-        order_id = memory["order_id"] or "Not provided"
-        previous_issue = (
-            memory["previous_issue"]
-            or "No issue recorded"
-        )
-
-        return (
-            "Here is what I remember:\n"
-            f"Customer name: {customer_name}\n"
-            f"Order ID: {order_id}\n"
-            f"Previous issue: {previous_issue}"
-        )
-
-    # ========================================================
-    # REFUND
-    # ========================================================
-
-    if any(word in text for word in [
-        "refund",
-        "money back"
-    ]):
-        detect_issue(message)
-
-        if any(phrase in text for phrase in [
-            "not received",
-            "not got",
-            "haven't received",
-            "have not received",
-            "refund not received"
-        ]):
-            return knowledge_base["refunds"]["not_received"]
-
-        return knowledge_base["refunds"]["time"]
-
-    # ========================================================
-    # RETURN
-    # ========================================================
-
-    if any(word in text for word in [
+    "returns": [
         "return",
-        "send back",
-        "exchange"
-    ]):
-        detect_issue(message)
+        "return policy",
+        "return product",
+        "send back"
+    ],
 
-        if any(word in text for word in [
-            "how",
-            "process",
-            "start",
-            "procedure"
-        ]):
-            return knowledge_base["returns"]["process"]
+    "refunds": [
+        "refund",
+        "money back",
+        "refund status",
+        "refund time"
+    ],
 
-        return knowledge_base["returns"]["policy"]
-
-    # ========================================================
-    # PAYMENT
-    # ========================================================
-
-    if any(word in text for word in [
+    "payments": [
         "payment",
+        "payment failed",
+        "transaction",
+        "money deducted",
+        "charged",
+        "payment methods",
         "upi",
         "debit card",
         "credit card",
         "net banking"
-    ]):
-        detect_issue(message)
+    ],
 
-        if any(word in text for word in [
-            "failed",
-            "failure",
-            "deducted",
-            "money deducted"
-        ]):
-            return knowledge_base["payments"]["failed"]
-
-        return knowledge_base["payments"]["methods"]
-
-    # ========================================================
-    # ORDER CANCELLATION
-    # ========================================================
-
-    if any(phrase in text for phrase in [
-        "cancel order",
-        "cancel my order",
-        "cancel the order",
-        "want to cancel"
-    ]):
-        detect_issue(message)
-        return knowledge_base["orders"]["cancel"]
-
-    # ========================================================
-    # LATE OR MISSING DELIVERY
-    # ========================================================
-
-    if any(phrase in text for phrase in [
-        "late delivery",
-        "delivery is late",
-        "order is late",
-        "not arrived",
-        "not delivered",
-        "has not arrived",
-        "hasn't arrived",
-        "not received my order"
-    ]):
-        detect_issue(message)
-
-        if memory["order_id"]:
-            return (
-                f"I understand that your order "
-                f"{memory['order_id']} has a delivery issue. "
-                + knowledge_base["delivery"]["late"]
-            )
-
-        return knowledge_base["delivery"]["late"]
-
-    # ========================================================
-    # DELIVERY TIME
-    # ========================================================
-
-    if any(phrase in text for phrase in [
-        "delivery time",
-        "shipping time",
-        "when will it arrive",
-        "when will my order arrive",
-        "how long is delivery",
-        "how long does delivery take",
-        "how many days for delivery",
-        "how many days does delivery take",
-        "standard delivery"
-    ]):
-        detect_issue(message)
-        return knowledge_base["delivery"]["time"]
-
-    # ========================================================
-    # ORDER STATUS
-    # ========================================================
-
-    if any(phrase in text for phrase in [
-        "order status",
-        "track my order",
-        "where is my order",
-        "track order"
-    ]):
-        detect_issue(message)
-
-        if memory["order_id"]:
-            return (
-                f"Your saved order ID is "
-                f"{memory['order_id']}. "
-                + knowledge_base["orders"]["status"]
-            )
-
-        return knowledge_base["orders"]["status"]
-
-    # ========================================================
-    # ACCOUNT
-    # ========================================================
-
-    if any(word in text for word in [
-        "password",
-        "login",
+    "account": [
         "account",
-        "registered email"
-    ]):
-        detect_issue(message)
+        "login",
+        "log in",
+        "sign in",
+        "profile",
+        "registered email",
+        "account help"
+    ],
 
-        if any(word in text for word in [
-            "password",
-            "forgot password",
-            "reset password"
-        ]):
-            return knowledge_base["account"]["password"]
+    "password": [
+        "password",
+        "forgot password",
+        "reset password",
+        "change password"
+    ],
 
-        return knowledge_base["account"]["help"]
+    "products": [
+        "product",
+        "products",
+        "item",
+        "items",
+        "features",
+        "specification",
+        "specifications",
+        "availability",
+        "available",
+        "stock"
+    ],
 
-    # ========================================================
-    # SUPPORT
-    # ========================================================
+    "services": [
+        "service",
+        "services",
+        "what do you offer",
+        "what services",
+        "your services",
+        "offering"
+    ],
 
-    if any(word in text for word in [
-        "support",
-        "customer care",
-        "contact support",
+    "pricing": [
+        "price",
+        "pricing",
+        "cost",
+        "charge",
+        "charges",
+        "fee",
+        "fees"
+    ],
+
+    "subscription": [
+        "subscription",
+        "subscribe",
+        "renewal",
+        "renew",
+        "plan",
+        "membership"
+    ],
+
+    "technical": [
+        "technical problem",
+        "technical issue",
+        "not working",
+        "error",
+        "bug",
+        "problem",
+        "troubleshoot",
+        "troubleshooting",
+        "installation",
+        "setup",
+        "configuration",
+        "software issue"
+    ],
+
+    "connectivity": [
+        "connection",
+        "connectivity",
+        "internet",
+        "network",
+        "wifi",
+        "offline"
+    ],
+
+    "complaint": [
+        "complaint",
+        "complain",
+        "unhappy",
+        "bad experience",
+        "poor service",
+        "issue with service"
+    ],
+
+    "feedback": [
+        "feedback",
+        "suggestion",
+        "suggest",
+        "review"
+    ],
+
+    "contact": [
+        "contact",
+        "customer support",
+        "support number",
+        "phone number",
+        "email",
         "working hours",
+        "office hours",
         "support hours"
-    ]):
-        if any(word in text for word in [
-            "hours",
-            "time",
-            "open",
-            "close"
-        ]):
-            return knowledge_base["support"]["working_hours"]
+    ],
 
-        return knowledge_base["support"]["contact"]
+    "escalation": [
+        "escalate",
+        "manager",
+        "supervisor",
+        "human agent",
+        "human support",
+        "speak to an agent",
+        "talk to an agent"
+    ]
+}
 
-    # ========================================================
-    # GREETING
-    # ========================================================
 
-    if any(phrase in text for phrase in [
+def detect_issue(message):
+    """Identify the most likely customer-support intent."""
+    text = message.lower().strip()
+
+    # Specific intents first
+    priority_order = [
+        "password",
+        "order_cancel",
+        "order_status",
+        "refunds",
+        "returns",
+        "payments",
+        "subscription",
+        "connectivity",
+        "technical",
+        "complaint",
+        "feedback",
+        "escalation",
+        "account",
+        "delivery",
+        "products",
+        "services",
+        "pricing",
+        "contact"
+    ]
+
+    for intent in priority_order:
+        keywords = INTENT_KEYWORDS.get(intent, [])
+
+        for keyword in keywords:
+            if keyword in text:
+                return intent
+
+    return "general"
+
+
+# ---------------------------------------------------------
+# RESPONSE GENERATION
+# ---------------------------------------------------------
+
+def get_kb_response(intent):
+    """Get a response from the JSON knowledge base."""
+    intent_data = knowledge_base.get(intent)
+
+    if isinstance(intent_data, str):
+        return intent_data
+
+    if isinstance(intent_data, dict):
+        # Prefer a general response
+        if "response" in intent_data:
+            return intent_data["response"]
+
+        # Otherwise combine available text entries
+        values = []
+
+        for value in intent_data.values():
+            if isinstance(value, str):
+                values.append(value)
+
+        if values:
+            return " ".join(values)
+
+    return None
+
+
+def generate_response(user_message):
+    """Generate a chatbot response."""
+    global memory
+
+    message = user_message.strip()
+    lower_message = message.lower()
+
+    # Extract customer name
+    name = extract_customer_name(message)
+
+    if name:
+        memory["customer_name"] = name
+        response = (
+            f"Nice to meet you, {name}! "
+            "I will remember your name during our conversations."
+        )
+        memory["previous_issue"] = "Customer introduction"
+        return response
+
+    # Extract order ID
+    order_id = extract_order_id(message)
+
+    if order_id:
+        memory["order_id"] = order_id
+        response = (
+            f"Thank you. I have saved your order/reference ID as {order_id}. "
+            "How can I help you with it?"
+        )
+        memory["previous_issue"] = "Order/reference ID provided"
+        return response
+
+    # Memory questions
+    if (
+        "what do you remember" in lower_message
+        or "what did you remember" in lower_message
+        or "show my memory" in lower_message
+        or "my details" in lower_message
+    ):
+        name_text = memory.get("customer_name") or "Not provided"
+        order_text = memory.get("order_id") or "Not provided"
+        issue_text = memory.get("previous_issue") or "No previous issue recorded"
+
+        return (
+            "Here is what I remember:\n"
+            f"Customer name: {name_text}\n"
+            f"Order/reference ID: {order_text}\n"
+            f"Previous issue: {issue_text}"
+        )
+
+    # Direct memory questions
+    if "what is my order id" in lower_message or "my order id" in lower_message:
+        order_id = memory.get("order_id")
+
+        if order_id:
+            return f"Yes. Your saved order/reference ID is {order_id}."
+
+        return "I do not have an order/reference ID saved yet."
+
+    if "what is my name" in lower_message:
+        name = memory.get("customer_name")
+
+        if name:
+            return f"Your saved name is {name}."
+
+        return "I do not have your name saved yet."
+
+    # Greetings
+    greetings = [
         "hello",
         "hi",
         "hey",
         "good morning",
         "good afternoon",
         "good evening"
-    ]):
-        if memory["customer_name"]:
-            return (
-                f"Hello {memory['customer_name']}! "
-                + knowledge_base["greeting"]
-            )
+    ]
 
-        return knowledge_base["greeting"]
+    if any(lower_message == greeting for greeting in greetings):
+        if memory.get("customer_name"):
+            return f"Hello, {memory['customer_name']}! How can I help you today?"
 
-    # ========================================================
-    # DEFAULT RESPONSE
-    # ========================================================
+        return knowledge_base.get(
+            "greeting",
+            "Hello! Welcome to our customer support service. How can I help you today?"
+        )
+
+    # Detect intent
+    intent = detect_issue(message)
+
+    # Save previous issue
+    if intent != "general":
+        memory["previous_issue"] = intent.replace("_", " ").title()
+
+    # Get response from knowledge base
+    response = get_kb_response(intent)
+
+    if response:
+        return response
+
+    # Context-aware general response
+    if memory.get("customer_name"):
+        return (
+            f"I'd be happy to help, {memory['customer_name']}. "
+            "Please tell me more about your question or issue."
+        )
 
     return (
-        "I'm sorry, I didn't fully understand your question. "
-        "I can help with orders, delivery, returns, refunds, "
-        "payments, account issues and customer support."
+        "I'd be happy to help. You can ask me about products, services, "
+        "orders, delivery, returns, refunds, payments, accounts, "
+        "subscriptions, technical issues, complaints, feedback, or general support."
     )
 
 
-# ============================================================
-# SAVE CONVERSATION
-# ============================================================
+# ---------------------------------------------------------
+# MEMORY + CONVERSATION HISTORY
+# ---------------------------------------------------------
 
 def save_conversation(user_message, bot_response):
-    conversation_entry = {
-        "timestamp": datetime.now().strftime(
-            "%Y-%m-%d %H:%M:%S"
-        ),
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    memory["conversation_history"].append({
+        "timestamp": timestamp,
         "user": user_message,
         "bot": bot_response
-    }
+    })
 
-    memory["conversation"].append(
-        conversation_entry
-    )
-
-    save_json(
-        MEMORY_FILE,
-        memory
-    )
+    save_json(MEMORY_FILE, memory)
 
 
-# ============================================================
-# MAIN PROGRAM
-# ============================================================
+# ---------------------------------------------------------
+# MAIN CHATBOT
+# ---------------------------------------------------------
 
 def main():
-
     print("=" * 60)
-    print("        AI CUSTOMER SUPPORT CHATBOT WITH MEMORY")
+    print("       AI CUSTOMER SUPPORT CHATBOT WITH MEMORY")
     print("=" * 60)
 
-    if memory["customer_name"]:
-        print(
-            f"\nWelcome back, {memory['customer_name']}!"
-        )
+    if memory.get("customer_name"):
+        print(f"\nWelcome back, {memory['customer_name']}!")
     else:
-        print(
-            "\nWelcome to AI Customer Support Chatbot!"
-        )
+        print("\nWelcome to AI Customer Support Chatbot!")
 
     print(
-        "I can help with orders, delivery, returns, "
-        "refunds, payments and account issues."
+        "\nI can help with general enquiries, products, services, "
+        "orders, delivery, returns, refunds, payments, accounts, "
+        "subscriptions, technical issues, complaints, feedback and more."
     )
 
-    print(
-        "\nI can also remember your name, "
-        "order ID and previous issue."
-    )
-
-    print("\nType 'bye' to exit.\n")
+    print("\nType 'bye' to exit.")
 
     while True:
-
-        user_message = input("You: ").strip()
-
-        if not user_message:
-            continue
-
-        # EXIT
-        if user_message.lower() in [
-            "bye",
-            "exit",
-            "quit"
-        ]:
-            save_json(
-                MEMORY_FILE,
-                memory
-            )
-
-            print(
-                "\nBot: Thank you for contacting customer "
-                "support. Your conversation memory has been saved."
-            )
-
-            print("Goodbye!")
+        try:
+            user_message = input("\nYou: ").strip()
+        except (KeyboardInterrupt, EOFError):
+            print("\nBot: Goodbye!")
+            save_json(MEMORY_FILE, memory)
             break
 
-        # GENERATE RESPONSE
-        bot_response = generate_response(
-            user_message
-        )
+        if not user_message:
+            print("Bot: Please enter a message so I can help you.")
+            continue
 
-        # DISPLAY RESPONSE
-        print(
-            f"Bot: {bot_response}\n"
-        )
+        if user_message.lower() in {"bye", "exit", "quit"}:
+            response = "Thank you for contacting customer support. Goodbye!"
+            print(f"Bot: {response}")
+            save_conversation(user_message, response)
+            break
 
-        # SAVE CONVERSATION
-        save_conversation(
-            user_message,
-            bot_response
-        )
+        response = generate_response(user_message)
+        print(f"Bot: {response}")
 
+        save_conversation(user_message, response)
 
-# ============================================================
-# START PROGRAM
-# ============================================================
 
 if __name__ == "__main__":
     main()

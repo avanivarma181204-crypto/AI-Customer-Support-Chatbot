@@ -1,39 +1,79 @@
 {
     "greeting": "Hello! Welcome to our AI Customer Support Service. How can I help you today?",
 
-    "orders": {
-        "status": "You can check your order status using your order ID. Please provide your order ID.",
-        "not_received": "If your order has not arrived, please provide your order ID so we can check the delivery details.",
-        "cancel": "Orders can be cancelled before they are shipped. Please provide your order ID."
+    "order_status": {
+        "response": "For order tracking or status updates, please provide your order or reference ID. I can help you understand the current support process."
+    },
+
+    "order_cancel": {
+        "response": "Orders may be cancelled depending on their current processing status. Please provide your order or reference ID so we can assist you."
     },
 
     "delivery": {
-        "time": "Standard delivery usually takes 3 to 5 business days.",
-        "late": "We apologize for the delay. Please provide your order ID so we can check the delivery status."
+        "response": "Delivery information can depend on the service and location. For an existing order, please provide your order or reference ID so we can assist you with delivery-related questions."
     },
 
     "returns": {
-        "policy": "Products can be returned within 7 days of delivery if they are unused and in their original condition.",
-        "process": "To start a return, please provide your order ID and the reason for the return."
+        "response": "Return support is available for eligible products or services. Please provide your order or reference ID and explain the reason for the return."
     },
 
     "refunds": {
-        "time": "Refunds are generally processed within 5 to 7 business days after a return is approved.",
-        "not_received": "If you have not received your refund, please provide your order ID so we can check the refund status."
+        "response": "Refund processing time can vary depending on the transaction and approval status. Please provide your order, reference, or transaction details for further assistance."
     },
 
     "payments": {
-        "methods": "We support UPI, debit cards, credit cards and net banking.",
-        "failed": "If your payment failed but money was deducted, please wait for the bank reversal. If the amount is not returned, contact support with your transaction details."
+        "response": "We can assist with payment methods, failed payments, transaction issues, and payment-related questions. Please provide the relevant transaction details when requesting assistance."
     },
 
     "account": {
-        "password": "You can reset your password using the Forgot Password option on the login page.",
-        "help": "Please provide your registered email address for account-related assistance."
+        "response": "For account assistance, please explain the problem you are facing, such as login, profile, registered email, or account-access issues."
     },
 
-    "support": {
-        "contact": "You can contact customer support through the support section of the application.",
-        "working_hours": "Customer support is available Monday to Saturday, from 9 AM to 6 PM."
+    "password": {
+        "response": "You can usually reset your password using the Forgot Password option on the login page. If you continue to experience problems, contact customer support for further assistance."
+    },
+
+    "products": {
+        "response": "I can provide general assistance with product information, features, specifications, availability, and related questions. Please tell me which product or feature you are interested in."
+    },
+
+    "services": {
+        "response": "Our customer support service can help with product and service enquiries, account assistance, transactions, technical issues, and general customer questions."
+    },
+
+    "pricing": {
+        "response": "For pricing, charges, fees, or cost-related questions, please provide the name of the product or service you are asking about."
+    },
+
+    "subscription": {
+        "response": "Subscription support can include information about plans, renewals, membership, billing, and cancellation. Please describe what you need help with."
+    },
+
+    "technical": {
+        "response": "I can help with common technical issues such as errors, setup, installation, configuration, software problems, and troubleshooting. Please describe the problem you are experiencing."
+    },
+
+    "connectivity": {
+        "response": "For connectivity problems involving internet, Wi-Fi, network access, or offline issues, please describe the problem and any error message you received."
+    },
+
+    "complaint": {
+        "response": "We are sorry to hear that you experienced a problem. Please describe your complaint clearly so it can be reviewed and appropriate support can be provided."
+    },
+
+    "feedback": {
+        "response": "Thank you for your feedback. Please share your suggestion, review, or experience so it can be recorded and considered."
+    },
+
+    "contact": {
+        "response": "Customer support can assist with general enquiries, account issues, service questions, technical problems, and other customer concerns. Support availability may depend on the service."
+    },
+
+    "escalation": {
+        "response": "If your issue requires additional assistance, you can request escalation to a customer-support representative or supervisor. Please describe the issue and provide any relevant reference details."
+    },
+
+    "general": {
+        "response": "I can help with general enquiries, products, services, orders, delivery, returns, refunds, payments, accounts, subscriptions, technical issues, connectivity, complaints, feedback, and customer support."
     }
 }
