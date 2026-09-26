@@ -2,128 +2,286 @@
 
 ## Project Overview
 
-The **AI Customer Support Chatbot with Memory** is a Python-based customer support application that answers common customer questions and remembers important customer information across conversations.
+The **AI Customer Support Chatbot with Memory** is a Python-based customer support application designed to automate common customer-support interactions and maintain important customer information across conversations.
 
-The chatbot can remember:
+The chatbot uses **rule-based natural-language processing**, keyword-based intent detection, a JSON knowledge base, and persistent JSON memory.
 
-- Customer name
-- Order ID
-- Previous customer issue
-- Conversation history
+It can support multiple customer-service areas including general enquiries, products, services, orders, delivery, returns, refunds, payments, accounts, subscriptions, technical problems, connectivity issues, complaints, feedback, and escalation requests.
 
-The project uses a JSON knowledge base for customer-support information and a JSON memory file for persistent storage.
-
-> **Technical description:** This implementation uses rule-based natural-language/keyword matching with persistent JSON memory. It does not require a paid API or external AI service.
+The project works locally and does not require a paid external AI API.
 
 ---
 
 ## Problem Statement
 
-Customers frequently ask support teams repetitive questions about orders, delivery, returns, refunds, payments, and accounts.
+Customer-support teams frequently handle repetitive questions about products, services, orders, payments, accounts, technical problems, and other common issues.
 
-A chatbot can provide immediate answers to common questions and reduce repetitive support work.
+A support chatbot can provide immediate responses to frequently asked questions and reduce repetitive manual work.
 
-A normal chatbot may forget information when the program is restarted. This project addresses that problem by storing important customer information and conversation history in a persistent JSON memory file.
+Another problem with simple chatbots is that they may forget customer information after the program is closed.
+
+This project addresses both problems by combining automated customer-support responses with a persistent memory system.
 
 ---
 
 ## Objectives
 
-1. Build a Python customer-support chatbot.
-2. Answer frequently asked customer-support questions automatically.
-3. Store customer information during conversations.
-4. Remember information after restarting the program.
-5. Maintain conversation history.
-6. Provide a simple command-line interface.
-7. Build the project without requiring a paid API.
+- Automate common customer-support interactions.
+- Identify customer intent using rules and keywords.
+- Provide relevant responses from a structured knowledge base.
+- Remember important customer information.
+- Store customer order or reference IDs.
+- Maintain conversation history.
+- Preserve information across application restarts.
+- Provide a simple local customer-support solution without a paid API.
 
 ---
 
-## Features
+## Key Features
 
-### 1. Customer Name Memory
+### 1. General Customer Support
 
-The chatbot can recognize:
+The chatbot can respond to common general enquiries and direct customers toward the appropriate support area.
 
-```text
-My name is Avani
-````
+### 2. Product Support
 
-It stores the customer's name and can later answer:
+It can handle general questions about:
 
-```text
-What is my name?
-```
+- Products
+- Features
+- Specifications
+- Availability
+- Stock
+
+### 3. Service Support
+
+It can provide information about available services and common service-related enquiries.
+
+### 4. Order Support
+
+The chatbot can assist with:
+
+- Order status
+- Order tracking
+- Order cancellation
+- Reference or order IDs
+
+### 5. Delivery Support
+
+It can respond to delivery-related questions, including delayed or pending deliveries.
+
+### 6. Returns and Refunds
+
+The chatbot can provide general guidance about returns, refund processing, and refund-related questions.
+
+### 7. Payment Support
+
+It can handle common questions involving:
+
+- Payment methods
+- Failed payments
+- Transaction issues
+- Charges
+- Payment-related problems
+
+### 8. Account Support
+
+The chatbot can assist with:
+
+- Login problems
+- Account issues
+- Profile-related questions
+- Registered account information
+
+### 9. Password Support
+
+It provides guidance for:
+
+- Forgot password
+- Password reset
+- Password-related account problems
+
+### 10. Subscription Support
+
+It can respond to questions about:
+
+- Subscriptions
+- Plans
+- Membership
+- Renewals
+- Cancellation
+
+### 11. Technical Support
+
+It can provide first-level guidance for:
+
+- Errors
+- Software problems
+- Installation
+- Setup
+- Configuration
+- Troubleshooting
+
+### 12. Connectivity Support
+
+It can handle common questions involving:
+
+- Internet
+- Wi-Fi
+- Network
+- Connectivity
+- Offline issues
+
+### 13. Complaint and Feedback Support
+
+Customers can provide complaints, reviews, suggestions, and feedback.
+
+### 14. Escalation Support
+
+The chatbot can recognize requests to speak with a human representative, supervisor, or support agent.
 
 ---
 
-### 2. Order ID Memory
+## Persistent Memory
 
-The chatbot recognizes order IDs such as:
+Persistent memory is one of the main features of the project.
 
-```text
-My order ID is ORD12345
-```
-
-It stores the order ID and can later answer:
-
-```text
-What is my order ID?
-```
-
----
-
-### 3. Persistent Memory
-
-Customer information is stored in:
+The chatbot stores important information in:
 
 ```text
 memory.json
+````
+
+The memory system can store:
+
+* Customer name
+* Order/reference ID
+* Previous issue
+* Conversation history
+* Timestamp of conversations
+
+### Example
+
+```text
+User: My name is Avani
+
+Bot: Nice to meet you, Avani! I will remember your name.
 ```
 
-Because the information is stored in a file, the chatbot can remember information even after the program is closed and restarted.
+Later:
+
+```text
+User: What is my name?
+
+Bot: Your saved name is Avani.
+```
+
+The same information remains available after restarting the program.
+
+This demonstrates **persistent memory across sessions**.
 
 ---
 
-### 4. Conversation History
+## Knowledge Base
 
-Every conversation is stored with:
+The chatbot uses:
 
-* Timestamp
-* User message
-* Chatbot response
+```text
+knowledge_base.json
+```
 
----
+to store customer-support responses.
 
-### 5. Customer Support Topics
-
-The chatbot can handle:
+The knowledge base contains information related to:
 
 * Orders
-* Order status
 * Delivery
-* Late delivery
 * Returns
 * Refunds
 * Payments
-* Account issues
-* Password assistance
-* Customer support information
-* Order cancellation
+* Accounts
+* Passwords
+* Products
+* Services
+* Pricing
+* Subscriptions
+* Technical issues
+* Connectivity
+* Complaints
+* Feedback
+* Contact and escalation support
+
+Separating the knowledge base from the main Python program makes the project easier to maintain and expand.
 
 ---
 
-## Technologies Used
+## How the Chatbot Works
+
+```text
+User enters a message
+        ↓
+Message processing
+        ↓
+Customer information extraction
+        ↓
+Intent detection
+        ↓
+Knowledge-base lookup
+        ↓
+Response generation
+        ↓
+Response displayed to user
+        ↓
+Conversation saved to memory
+```
+
+---
+
+## System Architecture
+
+```text
+                 CUSTOMER
+                    │
+                    ↓
+             USER MESSAGE
+                    │
+                    ↓
+          MESSAGE PROCESSING
+                    │
+          ┌─────────┴─────────┐
+          ↓                   ↓
+ INFORMATION EXTRACTION   INTENT DETECTION
+          │                   │
+          └─────────┬─────────┘
+                    ↓
+             RESPONSE LOGIC
+                    │
+          ┌─────────┴─────────┐
+          ↓                   ↓
+ KNOWLEDGE BASE          MEMORY SYSTEM
+knowledge_base.json       memory.json
+          │                   │
+          └─────────┬─────────┘
+                    ↓
+              CHATBOT RESPONSE
+                    │
+                    ↓
+           CONVERSATION STORAGE
+```
+
+---
+
+## Technology Stack
 
 | Technology          | Purpose                              |
 | ------------------- | ------------------------------------ |
 | Python              | Main programming language            |
 | JSON                | Knowledge base and persistent memory |
-| Regular Expressions | Extract customer names and order IDs |
-| Rule-Based NLP      | Identify customer intent             |
+| Regular Expressions | Customer information extraction      |
+| Rule-Based NLP      | Intent detection                     |
 | VS Code             | Development environment              |
-
-The project uses Python's built-in libraries and does not require a paid API.
+| Git                 | Version control                      |
+| GitHub              | Repository and project submission    |
 
 ---
 
@@ -139,125 +297,28 @@ AI-Customer-Support-Chatbot/
 └── README.md
 ```
 
-### app.py
+### File Description
 
-Contains the main chatbot logic.
+**app.py**
+Contains the main chatbot logic, intent detection, memory handling, and conversation management.
 
-It is responsible for:
+**knowledge_base.json**
+Contains predefined customer-support information and responses.
 
-* Reading user input
-* Detecting customer intent
-* Extracting customer information
-* Generating responses
-* Saving conversations
+**memory.json**
+Stores customer information and conversation history locally.
 
-### knowledge_base.json
+**.gitignore**
+Prevents private files such as `memory.json` from being uploaded to GitHub.
 
-Contains predefined customer-support information about:
-
-* Orders
-* Delivery
-* Returns
-* Refunds
-* Payments
-* Accounts
-* Support
-
-### memory.json
-
-Stores:
-
-* Customer name
-* Order ID
-* Previous issue
-* Conversation history
-
-### README.md
-
-Contains the project documentation and instructions.
-
----
-
-## How the Chatbot Works
-
-```text
-User enters a message
-        ↓
-Message is processed
-        ↓
-Customer information is detected
-        ↓
-Customer intent is identified
-        ↓
-Relevant knowledge-base information is selected
-        ↓
-Response is generated
-        ↓
-Conversation is saved to memory.json
-        ↓
-Chatbot waits for the next message
-```
-
----
-
-## Memory Mechanism
-
-The memory feature is one of the main components of the project.
-
-For example:
-
-```text
-You: My name is Avani
-
-Bot: Nice to meet you, Avani!
-```
-
-The name is stored in `memory.json`.
-
-Then:
-
-```text
-You: My order ID is ORD12345
-
-Bot: Thank you. I have saved your order ID as ORD12345.
-```
-
-The order ID is also stored.
-
-Later:
-
-```text
-You: What do you remember?
-
-Bot: Here is what I remember:
-Customer name: Avani
-Order ID: ORD12345
-Previous issue: Delivery issue
-```
-
-After closing and restarting:
-
-```text
-Welcome back, Avani!
-```
-
-The chatbot can also answer:
-
-```text
-You: What is my order ID?
-
-Bot: Yes. Your saved order ID is ORD12345.
-```
-
-This demonstrates persistent memory across sessions.
+**README.md**
+Contains project documentation, features, setup instructions, and technical information.
 
 ---
 
 ## Example Conversation
 
 ```text
-AI CUSTOMER SUPPORT CHATBOT WITH MEMORY
-
 Welcome to AI Customer Support Chatbot!
 
 You: My name is Avani
@@ -265,35 +326,38 @@ You: My name is Avani
 Bot: Nice to meet you, Avani! I will remember your name
 during our conversations.
 
-You: My order ID is ORD12345
+You: What services do you provide?
 
-Bot: Thank you. I have saved your order ID as ORD12345.
-How can I help you with this order?
+Bot: Our customer support service can help with product
+and service enquiries, account assistance, transactions,
+technical issues, and general customer questions.
 
-You: How long does delivery take?
+You: I have a technical problem
 
-Bot: Standard delivery usually takes 3 to 5 business days.
+Bot: I can help with common technical issues such as
+errors, setup, installation, configuration, software
+problems, and troubleshooting.
 
-You: How long does a refund take?
+You: I want to make a complaint
 
-Bot: Refunds are generally processed within 5 to 7 business
-days after a return is approved.
+Bot: We are sorry to hear that you experienced a problem.
+Please describe your complaint clearly so it can be reviewed.
 
 You: What do you remember?
 
 Bot: Here is what I remember:
 Customer name: Avani
-Order ID: ORD12345
-Previous issue: Refund issue
+Order/reference ID: ...
+Previous issue: Complaint
 ```
 
 ---
 
 ## How to Run the Project
 
-### Step 1: Open the project folder
+### Step 1: Open the project
 
-Open the project in VS Code.
+Open the project folder in VS Code.
 
 ### Step 2: Open the terminal
 
@@ -315,7 +379,7 @@ cd ~/Desktop/AI-Customer-Support-Chatbot
 python3 app.py
 ```
 
-### Step 5: Start chatting
+### Step 5: Start interacting
 
 Example:
 
@@ -324,7 +388,11 @@ My name is Avani
 ```
 
 ```text
-My order ID is ORD12345
+Tell me about your services
+```
+
+```text
+I have a technical problem
 ```
 
 ```text
@@ -337,74 +405,77 @@ What do you remember?
 bye
 ```
 
-The conversation memory is saved automatically.
-
 ---
 
-## API and Database
+## API and Database Information
 
-This version does **not** require:
+This project does not require:
 
-* OpenAI API
-* Paid API keys
-* External databases
+* A paid OpenAI API
+* A paid external AI service
+* A cloud database
 
-The project uses:
+The current implementation uses local JSON files for:
 
-* `knowledge_base.json` for support information
-* `memory.json` for persistent customer memory
+```text
+knowledge_base.json
+memory.json
+```
 
-This makes the project easy to run locally.
+This makes the application easy to run and demonstrate locally.
 
 ---
 
 ## Advantages
 
-* Simple and easy to use
-* No paid API required
+* Multiple customer-support categories
 * Persistent customer memory
-* Fast responses
-* Easy to modify
-* Beginner-friendly
-* Separate knowledge base
+* Simple architecture
+* Easy to maintain
+* Fast local responses
+* No paid API required
+* Expandable knowledge base
 * Conversation history
+* Beginner-friendly implementation
 
 ---
 
 ## Limitations
 
-The current version uses predefined rules and keyword/phrase matching.
+The current implementation uses rule-based intent detection and predefined knowledge-base responses.
 
 Therefore:
 
-* It may not understand completely new questions.
-* It does not use a large language model.
-* It does not connect to a real order-management system.
-* Order status is based on predefined responses.
-* It currently runs through the command line.
+* It may not understand every possible wording.
+* It cannot provide unrestricted general knowledge like a large language model.
+* It does not connect to real company systems.
+* Order, payment, and account information is not retrieved from real-time databases.
+* The current interface is command-line based.
 
 ---
 
 ## Future Enhancements
 
-The project can be extended by adding:
+The project can be extended with:
 
-1. A web-based interface using Flask or FastAPI.
-2. A database such as MySQL.
-3. Real-time order tracking.
+1. Web-based interface using Flask or FastAPI.
+2. MySQL or another database.
+3. Real-time order and transaction integration.
 4. User authentication.
 5. Multilingual support.
 6. Sentiment analysis.
 7. Machine-learning intent classification.
 8. Integration with a free or local language model.
 9. Voice-based customer support.
-10. An admin dashboard.
+10. Admin dashboard and analytics.
+11. Live human-agent escalation.
+12. Cloud deployment.
 
 ---
 
 ## Learning Outcomes
 
-This project demonstrates:
+This project demonstrates practical knowledge of:
 
 * Python programming
 * Functions
@@ -413,17 +484,28 @@ This project demonstrates:
 * Regular expressions
 * JSON file handling
 * Data persistence
-* Rule-based natural-language processing
-* Exception handling
+* Rule-based NLP
+* Intent detection
 * Conversation management
-* Basic chatbot architecture
+* Exception handling
+* Git and GitHub
+* Project documentation
 
 ---
 
 ## Conclusion
 
-The **AI Customer Support Chatbot with Memory** demonstrates how a Python application can automate common customer-support interactions while maintaining persistent customer information.
+The **AI Customer Support Chatbot with Memory** demonstrates how Python can be used to automate a broad range of customer-support interactions while maintaining persistent customer information.
 
-The chatbot can remember important information such as customer name and order ID, answer common support questions, and store conversation history for future sessions.
+The system combines rule-based natural-language processing, a structured knowledge base, and persistent memory to provide a simple and expandable customer-support solution.
 
-The project provides a foundation that can later be extended into a web-based, database-driven, multilingual, or AI-powered customer-support system.
+The project can be further developed into a web-based, database-driven, multilingual, and AI-powered customer-support platform.
+
+---
+
+## GitHub Repository
+
+Public source code and project documentation:
+
+[https://github.com/avanivarma181204-crypto/AI-Customer-Support-Chatbot](https://github.com/avanivarma181204-crypto/AI-Customer-Support-Chatbot)
+
